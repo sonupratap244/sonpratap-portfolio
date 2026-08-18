@@ -25,7 +25,7 @@ function AdminLogin() {
 
     try {
       setLoading(true);
-      const res = await axios.post(`${API}https://portfolio-backend-7e9e.onrender.com`, { email, password });
+      const res = await axios.post(`${API}/admin/login`, { email, password });
 
       if (res.data.success) {
         localStorage.setItem("adminToken", res.data.token);

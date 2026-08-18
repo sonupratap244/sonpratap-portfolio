@@ -74,7 +74,7 @@ function Sidebar({
 
   const logout = () => {
     localStorage.removeItem("admin");
-    navigate("https://portfolio-backend-7e9e.onrender.com");
+    navigate("/admin/login");
   };
 
   return (

@@ -33,7 +33,7 @@ function App() {
       </Route>
       <Route path="/book-session" element={<BookSession />} />
       <Route
-        path="https://portfolio-backend-7e9e.onrender.com"
+        path="/admin/login"
         element={<AdminLogin />}
       />
 
