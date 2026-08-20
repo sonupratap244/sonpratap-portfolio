@@ -109,13 +109,13 @@ function Hero() {
                 "I create modern, scalable and premium web applications using React, Node.js and latest technologies."}
             </p>
 
-            <div className="mt-6 sm:mt-8 flex flex-wrap gap-3 sm:gap-4 justify-center lg:justify-start">
+            <div className="mt-6 sm:mt-8 flex flex-wrap gap-3 sm:gap-4 justify-center lg:justify-start relative z-10">
               <Link
                 to="/contact"
-                className="flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-500 to-indigo-600 px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-bold text-white shadow-xl transition hover:scale-105"
+                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-500 to-indigo-600 px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-bold text-white shadow-xl transition hover:scale-105 active:scale-95 cursor-pointer select-none"
+                onClick={(e) => e.stopPropagation()}
               >
                 Hire Me
-                {/* <FiArrowRight className="text-sm sm:text-base" /> */}
               </Link>
 
               {resumeUrl ? (
@@ -123,15 +123,15 @@ function Hero() {
                   href={resumeUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 rounded-full border border-slate-300 px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-bold text-slate-700 transition hover:border-cyan-500 hover:text-cyan-500 dark:border-slate-700 dark:text-white"
+                  className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-bold text-slate-700 transition hover:border-cyan-500 hover:text-cyan-500 dark:border-slate-700 dark:text-white cursor-pointer select-none"
+                  onClick={(e) => e.stopPropagation()}
                 >
                   Resume
-                  {/* <FiDownload className="text-sm sm:text-base" /> */}
                 </a>
               ) : (
                 <button
                   disabled
-                  className="flex items-center gap-2 rounded-full border border-slate-300 px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-bold text-slate-400 cursor-not-allowed dark:border-slate-700 dark:text-slate-600"
+                  className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-bold text-slate-400 cursor-not-allowed dark:border-slate-700 dark:text-slate-600 select-none"
                 >
                   Resume
                   <FiDownload className="text-sm sm:text-base" />
@@ -139,11 +139,13 @@ function Hero() {
               )}
 
               <button
-                onClick={() => window.location.href = '/book-session'}
-                className="flex items-center gap-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-600 px-4 sm:px-6 py-2 sm:py-3 text-sm font-bold text-white shadow-xl transition hover:scale-105"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.location.href = '/book-session';
+                }}
+                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-600 px-4 sm:px-6 py-2 sm:py-3 text-sm font-bold text-white shadow-xl transition hover:scale-105 active:scale-95 cursor-pointer select-none"
               >
                 Book Session
-
               </button>
             </div>
           </motion.div>

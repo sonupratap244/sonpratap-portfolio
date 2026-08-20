@@ -15,6 +15,8 @@ import {
   FiInbox,
   FiCheckCircle,
   FiClock,
+  FiChevronLeft,
+  FiChevronRight,
 } from "react-icons/fi";
 
 function AdminDashboard() {
@@ -93,7 +95,8 @@ function AdminDashboard() {
     const matchSearch =
       item.name.toLowerCase().includes(search.toLowerCase()) ||
       item.email.toLowerCase().includes(search.toLowerCase()) ||
-      item.message.toLowerCase().includes(search.toLowerCase());
+      item.message.toLowerCase().includes(search.toLowerCase()) ||
+      item.mobile?.toLowerCase().includes(search.toLowerCase());
     const matchStatus = filter === "all" ? true : item.status === filter;
     return matchSearch && matchStatus;
   });
@@ -114,79 +117,149 @@ function AdminDashboard() {
     });
   };
 
+  // Mobile Card View Component
+  const MobileMessageCard = ({ item, index }) => (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.05 }}
+      className="mb-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-lg dark:border-slate-700 dark:bg-[#0B1120]"
+    >
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex-1 min-w-0">
+          <h4 className="font-semibold text-slate-800 dark:text-white truncate">
+            {item.name}
+          </h4>
+          <p className="text-sm text-slate-500 dark:text-slate-400 truncate">
+            {item.email}
+          </p>
+          {item.mobile && (
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+              📱 {item.mobile}
+            </p>
+          )}
+        </div>
+        <span
+          className={`ml-2 flex-shrink-0 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
+            item.status === "read"
+              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+              : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+          }`}
+        >
+          {item.status === "read" ? (
+            <FiCheck size={10} />
+          ) : (
+            <FiClock size={10} />
+          )}
+          {item.status}
+        </span>
+      </div>
+
+      <div className="mb-3">
+        <p className="text-sm text-slate-600 dark:text-slate-300 break-words line-clamp-3">
+          {item.message}
+        </p>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-slate-400 dark:text-slate-500">
+          {formatDate(item.createdAt)}
+        </span>
+        <div className="flex gap-2">
+          <button
+            onClick={() => toggleStatus(item._id, item.status)}
+            className="rounded-lg bg-cyan-500/10 p-2 text-cyan-500 transition hover:bg-cyan-500 hover:text-white"
+            title={item.status === "read" ? "Mark as unread" : "Mark as read"}
+          >
+            <FiEye size={16} />
+          </button>
+          <button
+            onClick={() => deleteMessage(item._id)}
+            className="rounded-lg bg-red-500/10 p-2 text-red-500 transition hover:bg-red-500 hover:text-white"
+            title="Delete"
+          >
+            <FiTrash2 size={16} />
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  );
+
   return (
     <Layout>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="mx-auto max-w-7xl px-4"
+        className="mx-auto max-w-7xl px-3 sm:px-4 md:px-6"
       >
-        <div className="mb-8">
-          <h1 className="text-4xl font-black text-slate-800 dark:text-white">
+        <div className="mb-4 sm:mb-6 md:mb-8">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-800 dark:text-white">
             Messages
           </h1>
-          <p className="mt-2 text-slate-500 dark:text-slate-400">
+          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-slate-500 dark:text-slate-400">
             Manage all your incoming messages and inquiries
           </p>
         </div>
 
-        <div className="mb-8 grid gap-5 md:grid-cols-3">
+        {/* Stats Cards */}
+        <div className="mb-4 sm:mb-6 md:mb-8 grid grid-cols-3 gap-2 sm:gap-3 md:gap-5">
           <motion.div
-            whileHover={{ y: -5 }}
-            className="rounded-2xl bg-white p-6 shadow-xl transition-shadow hover:shadow-2xl dark:bg-[#0B1120]"
+            whileHover={{ y: -3 }}
+            className="rounded-xl sm:rounded-2xl bg-white p-3 sm:p-4 md:p-6 shadow-lg transition-shadow hover:shadow-xl dark:bg-[#0B1120]"
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Total Messages</p>
-                <h3 className="mt-1 text-3xl font-bold text-slate-800 dark:text-white">
+                <p className="text-[10px] sm:text-xs md:text-sm text-slate-500 dark:text-slate-400">Total</p>
+                <h3 className="mt-0.5 sm:mt-1 text-lg sm:text-xl md:text-3xl font-bold text-slate-800 dark:text-white">
                   {stats.total}
                 </h3>
               </div>
-              <div className="rounded-xl bg-cyan-500/10 p-3 text-cyan-500">
-                <FiMessageSquare size={24} />
+              <div className="rounded-xl bg-cyan-500/10 p-2 sm:p-3 text-cyan-500">
+                <FiMessageSquare size={16} className="sm:w-[20px] sm:h-[20px] md:w-[24px] md:h-[24px]" />
               </div>
             </div>
           </motion.div>
 
           <motion.div
-            whileHover={{ y: -5 }}
-            className="rounded-2xl bg-white p-6 shadow-xl transition-shadow hover:shadow-2xl dark:bg-[#0B1120]"
+            whileHover={{ y: -3 }}
+            className="rounded-xl sm:rounded-2xl bg-white p-3 sm:p-4 md:p-6 shadow-lg transition-shadow hover:shadow-xl dark:bg-[#0B1120]"
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Unread</p>
-                <h3 className="mt-1 text-3xl font-bold text-amber-500">
+                <p className="text-[10px] sm:text-xs md:text-sm text-slate-500 dark:text-slate-400">Unread</p>
+                <h3 className="mt-0.5 sm:mt-1 text-lg sm:text-xl md:text-3xl font-bold text-amber-500">
                   {stats.unread}
                 </h3>
               </div>
-              <div className="rounded-xl bg-amber-500/10 p-3 text-amber-500">
-                <FiClock size={24} />
+              <div className="rounded-xl bg-amber-500/10 p-2 sm:p-3 text-amber-500">
+                <FiClock size={16} className="sm:w-[20px] sm:h-[20px] md:w-[24px] md:h-[24px]" />
               </div>
             </div>
           </motion.div>
 
           <motion.div
-            whileHover={{ y: -5 }}
-            className="rounded-2xl bg-white p-6 shadow-xl transition-shadow hover:shadow-2xl dark:bg-[#0B1120]"
+            whileHover={{ y: -3 }}
+            className="rounded-xl sm:rounded-2xl bg-white p-3 sm:p-4 md:p-6 shadow-lg transition-shadow hover:shadow-xl dark:bg-[#0B1120]"
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Read</p>
-                <h3 className="mt-1 text-3xl font-bold text-emerald-500">
+                <p className="text-[10px] sm:text-xs md:text-sm text-slate-500 dark:text-slate-400">Read</p>
+                <h3 className="mt-0.5 sm:mt-1 text-lg sm:text-xl md:text-3xl font-bold text-emerald-500">
                   {stats.read}
                 </h3>
               </div>
-              <div className="rounded-xl bg-emerald-500/10 p-3 text-emerald-500">
-                <FiCheckCircle size={24} />
+              <div className="rounded-xl bg-emerald-500/10 p-2 sm:p-3 text-emerald-500">
+                <FiCheckCircle size={16} className="sm:w-[20px] sm:h-[20px] md:w-[24px] md:h-[24px]" />
               </div>
             </div>
           </motion.div>
         </div>
 
-        <div className="mb-8 flex flex-col gap-4 rounded-3xl bg-white p-5 shadow-xl dark:bg-[#0B1120] md:flex-row md:items-center md:justify-between">
+        {/* Search & Filter */}
+        <div className="mb-4 sm:mb-6 md:mb-8 flex flex-col gap-3 sm:gap-4 rounded-2xl sm:rounded-3xl bg-white p-3 sm:p-4 md:p-5 shadow-lg dark:bg-[#0B1120]">
           <div className="relative flex-1">
-            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+            <FiSearch className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
             <input
               type="text"
               placeholder="Search by name, email or message..."
@@ -195,17 +268,14 @@ function AdminDashboard() {
                 setSearch(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-12 pr-4 outline-none transition focus:border-cyan-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 sm:py-3 pl-9 sm:pl-12 pr-3 sm:pr-4 text-sm outline-none transition focus:border-cyan-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white placeholder:text-xs sm:placeholder:text-sm"
             />
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600">
             <button
-              onClick={() => {
-                setFilter("all");
-                setCurrentPage(1);
-              }}
-              className={`rounded-xl px-4 py-2 transition ${
+              onClick={() => { setFilter("all"); setCurrentPage(1); }}
+              className={`flex-shrink-0 rounded-xl px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm transition ${
                 filter === "all"
                   ? "bg-cyan-500 text-white"
                   : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300"
@@ -214,11 +284,8 @@ function AdminDashboard() {
               All
             </button>
             <button
-              onClick={() => {
-                setFilter("unread");
-                setCurrentPage(1);
-              }}
-              className={`rounded-xl px-4 py-2 transition ${
+              onClick={() => { setFilter("unread"); setCurrentPage(1); }}
+              className={`flex-shrink-0 rounded-xl px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm transition ${
                 filter === "unread"
                   ? "bg-amber-500 text-white"
                   : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300"
@@ -227,11 +294,8 @@ function AdminDashboard() {
               Unread
             </button>
             <button
-              onClick={() => {
-                setFilter("read");
-                setCurrentPage(1);
-              }}
-              className={`rounded-xl px-4 py-2 transition ${
+              onClick={() => { setFilter("read"); setCurrentPage(1); }}
+              className={`flex-shrink-0 rounded-xl px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm transition ${
                 filter === "read"
                   ? "bg-emerald-500 text-white"
                   : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300"
@@ -242,160 +306,152 @@ function AdminDashboard() {
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-3xl bg-white shadow-xl dark:bg-[#0B1120]">
+        {/* Messages Table/View */}
+        <div className="overflow-hidden rounded-2xl sm:rounded-3xl bg-white shadow-lg dark:bg-[#0B1120]">
           {loading ? (
-            <div className="flex items-center justify-center py-16">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-cyan-500 border-t-transparent"></div>
+            <div className="flex items-center justify-center py-12 sm:py-16">
+              <div className="h-6 w-6 sm:h-8 sm:w-8 animate-spin rounded-full border-4 border-cyan-500 border-t-transparent"></div>
             </div>
           ) : filteredMessages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16">
-              <FiInbox className="text-6xl text-slate-300 dark:text-slate-600" />
-              <p className="mt-4 text-lg text-slate-500 dark:text-slate-400">
+            <div className="flex flex-col items-center justify-center py-12 sm:py-16">
+              <FiInbox className="text-4xl sm:text-6xl text-slate-300 dark:text-slate-600" />
+              <p className="mt-3 sm:mt-4 text-base sm:text-lg text-slate-500 dark:text-slate-400">
                 No messages found
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/50">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600 dark:text-slate-300">
-                      #
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600 dark:text-slate-300">
-                      Name
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600 dark:text-slate-300">
-                      Email
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600 dark:text-slate-300">
-                      Mobile
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600 dark:text-slate-300">
-                      Message
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600 dark:text-slate-300">
-                      Date
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600 dark:text-slate-300">
-                      Status
-                    </th>
-                    <th className="px-6 py-4 text-center text-sm font-semibold text-slate-600 dark:text-slate-300">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginatedMessages.map((item, index) => (
-                    <motion.tr
-                      key={item._id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: index * 0.05 }}
-                      className="border-b border-slate-100 transition hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-900/50"
-                    >
-                      <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
-                        {(currentPage - 1) * perPage + index + 1}
-                      </td>
-                      <td className="px-6 py-4 font-medium text-slate-800 dark:text-white">
-                        {item.name}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">
-                        {item.email}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">
-                        {item.mobile}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">
-                        <div className="max-w-xs truncate">{item.message}</div>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
-                        {formatDate(item.createdAt)}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span
-                          className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ${
-                            item.status === "read"
-                              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                              : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                          }`}
-                        >
-                          {item.status === "read" ? (
-                            <FiCheck size={12} />
-                          ) : (
-                            <FiClock size={12} />
-                          )}
-                          {item.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center justify-center gap-2">
-                          <button
-                            onClick={() => toggleStatus(item._id, item.status)}
-                            className="rounded-lg bg-cyan-500/10 p-2 text-cyan-500 transition hover:bg-cyan-500 hover:text-white"
-                            title={
+            <>
+              {/* Desktop Table View - Hidden on mobile */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full min-w-[800px]">
+                  <thead className="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-300">#</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-300">Name</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-300">Email</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-300">Mobile</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-300">Message</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-300">Date</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-300">Status</th>
+                      <th className="px-4 py-3 text-center text-xs font-semibold text-slate-600 dark:text-slate-300">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginatedMessages.map((item, index) => (
+                      <motion.tr
+                        key={item._id}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="border-b border-slate-100 transition hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-900/50"
+                      >
+                        <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">
+                          {(currentPage - 1) * perPage + index + 1}
+                        </td>
+                        <td className="px-4 py-3 font-medium text-sm text-slate-800 dark:text-white">
+                          {item.name}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                          {item.email}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                          {item.mobile || "-"}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                          <div className="max-w-[150px] lg:max-w-[200px] truncate">{item.message}</div>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                          {formatDate(item.createdAt)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
                               item.status === "read"
-                                ? "Mark as unread"
-                                : "Mark as read"
-                            }
+                                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                                : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                            }`}
                           >
-                            <FiEye size={18} />
-                          </button>
-                          <button
-                            onClick={() => deleteMessage(item._id)}
-                            className="rounded-lg bg-red-500/10 p-2 text-red-500 transition hover:bg-red-500 hover:text-white"
-                            title="Delete"
-                          >
-                            <FiTrash2 size={18} />
-                          </button>
-                        </div>
-                      </td>
-                    </motion.tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                            {item.status === "read" ? <FiCheck size={10} /> : <FiClock size={10} />}
+                            {item.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              onClick={() => toggleStatus(item._id, item.status)}
+                              className="rounded-lg bg-cyan-500/10 p-1.5 sm:p-2 text-cyan-500 transition hover:bg-cyan-500 hover:text-white"
+                              title={item.status === "read" ? "Mark as unread" : "Mark as read"}
+                            >
+                              <FiEye size={16} className="sm:w-[18px] sm:h-[18px]" />
+                            </button>
+                            <button
+                              onClick={() => deleteMessage(item._id)}
+                              className="rounded-lg bg-red-500/10 p-1.5 sm:p-2 text-red-500 transition hover:bg-red-500 hover:text-white"
+                              title="Delete"
+                            >
+                              <FiTrash2 size={16} className="sm:w-[18px] sm:h-[18px]" />
+                            </button>
+                          </div>
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Card View - Visible only on mobile */}
+              <div className="md:hidden p-3 sm:p-4 max-h-[500px] overflow-y-auto">
+                {paginatedMessages.map((item, index) => (
+                  <MobileMessageCard key={item._id} item={item} index={index} />
+                ))}
+              </div>
+            </>
           )}
         </div>
 
+        {/* Pagination */}
         {totalPages > 1 && (
-          <div className="mt-6 flex justify-center gap-3">
+          <div className="mt-4 sm:mt-6 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
             <button
               onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
-              className={`rounded-xl px-4 py-2 transition ${
+              className={`rounded-xl px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm transition flex items-center gap-1 ${
                 currentPage === 1
                   ? "cursor-not-allowed bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-600"
                   : "bg-cyan-500 text-white hover:bg-cyan-600"
               }`}
             >
-              Previous
+              <FiChevronLeft size={14} />
+              Prev
             </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <button
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                className={`rounded-xl px-4 py-2 transition ${
-                  currentPage === page
-                    ? "bg-cyan-500 text-white"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300"
-                }`}
-              >
-                {page}
-              </button>
-            ))}
+            
+            <div className="flex gap-1 sm:gap-2 overflow-x-auto max-w-[200px] sm:max-w-[300px] md:max-w-none pb-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`flex-shrink-0 rounded-xl px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm transition ${
+                    currentPage === page
+                      ? "bg-cyan-500 text-white"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300"
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+            </div>
+
             <button
-              onClick={() =>
-                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-              }
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
               disabled={currentPage === totalPages}
-              className={`rounded-xl px-4 py-2 transition ${
+              className={`rounded-xl px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm transition flex items-center gap-1 ${
                 currentPage === totalPages
                   ? "cursor-not-allowed bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-600"
                   : "bg-cyan-500 text-white hover:bg-cyan-600"
               }`}
             >
               Next
+              <FiChevronRight size={14} />
             </button>
           </div>
         )}
