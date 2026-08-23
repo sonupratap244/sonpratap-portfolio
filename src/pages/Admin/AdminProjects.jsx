@@ -88,10 +88,15 @@ function AdminProjects() {
     setCurrentPage(1);
   };
 
-  const getImageUrl = (filename) => {
-    if (!filename) return null;
-    return `${BASE_URL}/uploads/projects/${filename}`;
-  };
+const getImageUrl = (image) => {
+  if (!image) return null;
+
+  if (image.startsWith("http://") || image.startsWith("https://")) {
+    return image;
+  }
+
+  return `${BASE_URL}/uploads/projects/${image}`;
+};
 
   const filteredProjects = projects.filter((item) => {
     const matchSearch =

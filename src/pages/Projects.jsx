@@ -28,10 +28,15 @@ function Projects() {
     fetchProjects();
   }, []);
 
-  const getImageUrl = (filename) => {
-    if (!filename) return null;
-    return `${BASE_URL}/uploads/projects/${filename}`;
-  };
+  const getImageUrl = (image) => {
+  if (!image) return null;
+
+  if (image.startsWith("http://") || image.startsWith("https://")) {
+    return image;
+  }
+
+  return `${BASE_URL}/uploads/projects/${image}`;
+};
 
   const defaultImage = "https://picsum.photos/900/600?random=";
 

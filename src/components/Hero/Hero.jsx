@@ -39,15 +39,25 @@ function Hero() {
     fetchProfile();
   }, []);
 
-  const getImageUrl = (filename) => {
-    if (!filename) return null;
-    return `${BASE_URL}/uploads/profile/${filename}`;
-  };
+ const getImageUrl = (image) => {
+  if (!image) return null;
 
-  const getResumeUrl = (filename) => {
-    if (!filename) return null;
-    return `${BASE_URL}/uploads/resume/${filename}`;
-  };
+  if (image.startsWith("http://") || image.startsWith("https://")) {
+    return image;
+  }
+
+  return `${BASE_URL}/uploads/profile/${image}`;
+};
+
+const getResumeUrl = (resume) => {
+  if (!resume) return null;
+
+  if (resume.startsWith("http://") || resume.startsWith("https://")) {
+    return resume;
+  }
+
+  return `${BASE_URL}/uploads/resume/${resume}`;
+};
 
   const profileImage = profileData.profileImage ? getImageUrl(profileData.profileImage) : Profile;
   const resumeUrl = getResumeUrl(profileData.resume);

@@ -33,10 +33,15 @@ function About() {
     fetchProfile();
   }, []);
 
-  const getImageUrl = (filename) => {
-    if (!filename) return null;
-    return `${BASE_URL}/uploads/about/${filename}`;
-  };
+ const getImageUrl = (image) => {
+  if (!image) return null;
+
+  if (image.startsWith("http://") || image.startsWith("https://")) {
+    return image;
+  }
+
+  return `${BASE_URL}/uploads/about/${image}`;
+};
 
   const aboutImage = profileData.aboutImage ? getImageUrl(profileData.aboutImage) : AboutImage;
 
