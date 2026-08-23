@@ -105,7 +105,7 @@ function Hero() {
                   2000,
                   "Node.js Developer",
                   2000,
-                  "UI/UX Enthusiast",
+                  "My SQL",
                   2000,
                 ]}
                 wrapper="span"
