@@ -39,25 +39,25 @@ function Hero() {
     fetchProfile();
   }, []);
 
- const getImageUrl = (image) => {
-  if (!image) return null;
+  const getImageUrl = (image) => {
+    if (!image) return null;
 
-  if (image.startsWith("http://") || image.startsWith("https://")) {
-    return image;
-  }
+    if (image.startsWith("http://") || image.startsWith("https://")) {
+      return image;
+    }
 
-  return `${BASE_URL}/uploads/profile/${image}`;
-};
+    return `${BASE_URL}/uploads/profile/${image}`;
+  };
 
-const getResumeUrl = (resume) => {
-  if (!resume) return null;
+  const getResumeUrl = (resume) => {
+    if (!resume) return null;
 
-  if (resume.startsWith("http://") || resume.startsWith("https://")) {
-    return resume;
-  }
+    if (resume.startsWith("http://") || resume.startsWith("https://")) {
+      return resume;
+    }
 
-  return `${BASE_URL}/uploads/resume/${resume}`;
-};
+    return `${BASE_URL}/uploads/resume/${resume}`;
+  };
 
   const profileImage = profileData.profileImage ? getImageUrl(profileData.profileImage) : Profile;
   const resumeUrl = getResumeUrl(profileData.resume);
@@ -134,9 +134,9 @@ const getResumeUrl = (resume) => {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-bold text-slate-700 transition hover:border-cyan-500 hover:text-cyan-500 dark:border-slate-700 dark:text-white cursor-pointer select-none"
-                  onClick={(e) => e.stopPropagation()}
                 >
                   Resume
+                  <FiDownload className="text-sm sm:text-base" />
                 </a>
               ) : (
                 <button
