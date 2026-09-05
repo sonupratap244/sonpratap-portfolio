@@ -251,7 +251,7 @@ function BookSession() {
       toast.success("Payment successful! 🎉");
       
       setTimeout(() => {
-        navigate("/https://sonpratap.onrender.com/", {
+        navigate("/", {
           state: {
             bookingId: booking._id,
             paymentId: paymentResult.razorpay_payment_id,
