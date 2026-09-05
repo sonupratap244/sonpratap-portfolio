@@ -10,11 +10,13 @@ import {
 } from "react-icons/fa";
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import Logo from "../../assets/logo.png";
 
 function Footer() {
   const year = new Date().getFullYear();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [profileData, setProfileData] = useState({
     name: "Son Pratap",
     github: "",
@@ -47,6 +49,18 @@ function Footer() {
   useEffect(() => {
     fetchProfile();
   }, []);
+
+  const handleNavigation = (path) => {
+    navigate(path);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const isActive = (path) => {
+    if (path === "/") {
+      return location.pathname === "/";
+    }
+    return location.pathname === path;
+  };
 
   const links = [
     { name: "Home", path: "/" },
@@ -101,7 +115,7 @@ function Footer() {
       hover: "hover:bg-red-700",
     },
     {
-      icon: FaInstagram,
+      icon: FaGlobe,
       href: profileData.website || profileData.portfolio,
       label: "Website",
       bg: "bg-emerald-600",
@@ -148,13 +162,17 @@ function Footer() {
             <h3 className="mb-4 sm:mb-5 text-lg sm:text-xl font-bold">Quick Links</h3>
             <div className="grid grid-cols-2 gap-2 sm:gap-3">
               {links.map((item) => (
-                <Link
+                <button
                   key={item.name}
-                  to={item.path}
-                  className="rounded-xl px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-slate-600 transition-all duration-300 hover:bg-cyan-500/10 hover:translate-x-1 hover:text-cyan-500 dark:text-slate-400 dark:hover:text-cyan-400"
+                  onClick={() => handleNavigation(item.path)}
+                  className={`text-left rounded-xl px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm transition-all duration-300 hover:bg-cyan-500/10 hover:translate-x-1 ${
+                    isActive(item.path)
+                      ? "bg-cyan-500/20 text-cyan-600 font-semibold dark:text-cyan-400"
+                      : "text-slate-600 hover:text-cyan-500 dark:text-slate-400 dark:hover:text-cyan-400"
+                  }`}
                 >
                   {item.name}
-                </Link>
+                </button>
               ))}
             </div>
           </div>
@@ -194,7 +212,7 @@ function Footer() {
                   rel="noopener noreferrer"
                   className="text-sm text-cyan-500 hover:underline flex items-center gap-2"
                 >
-                  <FaInstagram className="text-sm" />
+                  <FaGlobe className="text-sm" />
                   {profileData.website || profileData.portfolio}
                 </a>
               </div>

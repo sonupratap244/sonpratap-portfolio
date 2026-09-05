@@ -1,6 +1,5 @@
-// pages/BookSession.jsx
 import { motion } from "framer-motion";
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import {
   FaCalendarAlt,
   FaClock,
@@ -19,10 +18,29 @@ import {
   FaWhatsapp,
   FaGoogle,
   FaApple,
+  FaSpinner,
 } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+import toast from "react-hot-toast";
+
+// Razorpay Script Loader
+const loadRazorpayScript = () => {
+  return new Promise((resolve) => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
 
 function BookSession() {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const [razorpayLoaded, setRazorpayLoaded] = useState(false);
+
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -33,7 +51,24 @@ function BookSession() {
     mode: "video",
     message: "",
   });
-  const [selectedPayment, setSelectedPayment] = useState("card");
+
+  const API = import.meta.env.VITE_API_URL || "https://portfolio-backend-7e9e.onrender.com/api";
+  const RAZORPAY_KEY = import.meta.env.VITE_RAZORPAY_KEY || "";
+
+  // Load Razorpay script on mount
+  useEffect(() => {
+    const initRazorpay = async () => {
+      const loaded = await loadRazorpayScript();
+      setRazorpayLoaded(loaded);
+      if (!loaded) {
+        toast.error("Failed to load payment gateway. Please try again.");
+      }
+      if (!RAZORPAY_KEY) {
+        console.warn("⚠️ Razorpay key not configured in frontend .env");
+      }
+    };
+    initRazorpay();
+  }, []);
 
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
@@ -41,11 +76,6 @@ function BookSession() {
       ...prev,
       [name]: value
     }));
-  }, []);
-
-  const handleSubmit = useCallback((e) => {
-    e.preventDefault();
-    alert("Payment gateway coming soon!");
   }, []);
 
   const today = new Date().toISOString().split('T')[0];
@@ -83,20 +113,169 @@ function BookSession() {
     ],
   }), []);
 
+  // Create Booking
+  const createBooking = async (bookingData) => {
+    try {
+      const response = await axios.post(`${API}/bookings`, bookingData);
+      if (response.data.success) {
+        return response.data.data;
+      }
+      throw new Error(response.data.message || "Failed to create booking");
+    } catch (error) {
+      console.error("Booking Error:", error);
+      throw error;
+    }
+  };
+
+  // Create Payment Order
+  const createPaymentOrder = async (bookingId) => {
+    try {
+      const response = await axios.post(`${API}/payments/create-order`, { bookingId });
+      if (response.data.success) {
+        return response.data.data;
+      }
+      throw new Error(response.data.message || "Failed to create payment order");
+    } catch (error) {
+      console.error("Payment Order Error:", error);
+      throw error;
+    }
+  };
+
+  // Initiate Razorpay Payment
+  const initiateRazorpayPayment = (paymentData) => {
+    return new Promise((resolve, reject) => {
+      const key = paymentData.key || RAZORPAY_KEY;
+      
+      if (!key) {
+        reject(new Error("Razorpay key is not configured"));
+        return;
+      }
+
+      const options = {
+        key: key,
+        amount: paymentData.amount,
+        currency: paymentData.currency,
+        name: "Son Pratap",
+        description: `Session Booking - ${form.duration} min`,
+        order_id: paymentData.orderId,
+        prefill: {
+          name: form.name,
+          email: form.email,
+          contact: form.mobile,
+        },
+        notes: {
+          bookingId: paymentData.bookingId,
+          duration: form.duration,
+        },
+        theme: {
+          color: "#0ea5e9",
+        },
+        modal: {
+          ondismiss: function() {
+            reject(new Error("Payment cancelled by user"));
+          }
+        },
+        handler: function(response) {
+          resolve({
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_signature: response.razorpay_signature,
+          });
+        }
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    });
+  };
+
+  // Handle Form Submit
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // Validate form
+    if (!form.name || !form.email || !form.mobile || !form.date || !form.time) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    if (!razorpayLoaded) {
+      toast.error("Payment gateway is loading. Please wait...");
+      return;
+    }
+
+    if (!RAZORPAY_KEY) {
+      toast.error("Payment configuration is missing. Please contact support.");
+      return;
+    }
+
+    setLoading(true);
+    setPaymentProcessing(true);
+
+    try {
+      // Step 1: Create Booking
+      const bookingData = {
+        customer: {
+          name: form.name,
+          email: form.email,
+          mobile: form.mobile,
+        },
+        session: {
+          date: form.date,
+          time: form.time,
+          duration: parseInt(form.duration),
+          mode: form.mode,
+          message: form.message || "",
+        },
+        pricing: {
+          amount: price,
+          currency: "INR",
+        },
+      };
+
+      toast.loading("Creating booking...", { id: "booking" });
+      const booking = await createBooking(bookingData);
+      toast.success("Booking created!", { id: "booking" });
+
+      // Step 2: Create Payment Order
+      toast.loading("Preparing payment...", { id: "payment" });
+      const paymentOrder = await createPaymentOrder(booking._id);
+      toast.dismiss("payment");
+
+      // Step 3: Initiate Razorpay
+      toast.loading("Opening payment gateway...", { id: "razorpay" });
+      const paymentResult = await initiateRazorpayPayment(paymentOrder);
+      toast.dismiss("razorpay");
+
+      // Step 4: Payment Success
+      toast.success("Payment successful! 🎉");
+      
+      setTimeout(() => {
+        navigate("/booking-success", {
+          state: {
+            bookingId: booking._id,
+            paymentId: paymentResult.razorpay_payment_id,
+            session: booking.session,
+          }
+        });
+      }, 1000);
+
+    } catch (error) {
+      console.error("Payment Error:", error);
+      toast.error(error.message || "Payment failed. Please try again.");
+    } finally {
+      setLoading(false);
+      setPaymentProcessing(false);
+    }
+  };
+
   const paymentMethods = useMemo(() => [
     {
-      id: "card",
-      label: "Credit / Debit Card",
-      sub: "Visa, Mastercard, RuPay",
+      id: "razorpay",
+      label: "Razorpay",
+      sub: "Credit Card, Debit Card, UPI, Net Banking",
       icon: FaCreditCard,
       gradient: "from-cyan-500 to-indigo-600"
-    },
-    {
-      id: "upi",
-      label: "UPI",
-      sub: "Google Pay, PhonePe, Paytm",
-      icon: FaPhone,
-      gradient: "from-green-500 to-emerald-600"
     },
   ], []);
 
@@ -192,7 +371,8 @@ function BookSession() {
                         onChange={handleChange}
                         placeholder="Your Name"
                         required
-                        className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white/60 dark:bg-slate-800/50 pl-9 sm:pl-11 pr-4 py-3 sm:py-4 text-sm sm:text-base text-slate-800 dark:text-white shadow-sm backdrop-blur-sm outline-none transition-all duration-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+                        disabled={paymentProcessing}
+                        className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white/60 dark:bg-slate-800/50 pl-9 sm:pl-11 pr-4 py-3 sm:py-4 text-sm sm:text-base text-slate-800 dark:text-white shadow-sm backdrop-blur-sm outline-none transition-all duration-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 disabled:opacity-60"
                       />
                     </div>
                   </div>
@@ -209,7 +389,8 @@ function BookSession() {
                         onChange={handleChange}
                         placeholder="your@email.com"
                         required
-                        className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white/60 dark:bg-slate-800/50 pl-9 sm:pl-11 pr-4 py-3 sm:py-4 text-sm sm:text-base text-slate-800 dark:text-white shadow-sm backdrop-blur-sm outline-none transition-all duration-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+                        disabled={paymentProcessing}
+                        className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white/60 dark:bg-slate-800/50 pl-9 sm:pl-11 pr-4 py-3 sm:py-4 text-sm sm:text-base text-slate-800 dark:text-white shadow-sm backdrop-blur-sm outline-none transition-all duration-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 disabled:opacity-60"
                       />
                     </div>
                   </div>
@@ -228,7 +409,8 @@ function BookSession() {
                       onChange={handleChange}
                       placeholder="+91 98765 43210"
                       required
-                      className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white/60 dark:bg-slate-800/50 pl-9 sm:pl-11 pr-4 py-3 sm:py-4 text-sm sm:text-base text-slate-800 dark:text-white shadow-sm backdrop-blur-sm outline-none transition-all duration-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+                      disabled={paymentProcessing}
+                      className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white/60 dark:bg-slate-800/50 pl-9 sm:pl-11 pr-4 py-3 sm:py-4 text-sm sm:text-base text-slate-800 dark:text-white shadow-sm backdrop-blur-sm outline-none transition-all duration-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 disabled:opacity-60"
                     />
                   </div>
                 </div>
@@ -247,7 +429,8 @@ function BookSession() {
                         onChange={handleChange}
                         min={today}
                         required
-                        className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white/60 dark:bg-slate-800/50 pl-9 sm:pl-11 pr-4 py-3 sm:py-4 text-sm sm:text-base text-slate-800 dark:text-white shadow-sm backdrop-blur-sm outline-none transition-all duration-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+                        disabled={paymentProcessing}
+                        className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white/60 dark:bg-slate-800/50 pl-9 sm:pl-11 pr-4 py-3 sm:py-4 text-sm sm:text-base text-slate-800 dark:text-white shadow-sm backdrop-blur-sm outline-none transition-all duration-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 disabled:opacity-60"
                       />
                     </div>
                   </div>
@@ -263,7 +446,8 @@ function BookSession() {
                         value={form.time}
                         onChange={handleChange}
                         required
-                        className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white/60 dark:bg-slate-800/50 pl-9 sm:pl-11 pr-4 py-3 sm:py-4 text-sm sm:text-base text-slate-800 dark:text-white shadow-sm backdrop-blur-sm outline-none transition-all duration-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+                        disabled={paymentProcessing}
+                        className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white/60 dark:bg-slate-800/50 pl-9 sm:pl-11 pr-4 py-3 sm:py-4 text-sm sm:text-base text-slate-800 dark:text-white shadow-sm backdrop-blur-sm outline-none transition-all duration-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 disabled:opacity-60"
                       />
                     </div>
                   </div>
@@ -278,7 +462,8 @@ function BookSession() {
                       name="duration"
                       value={form.duration}
                       onChange={handleChange}
-                      className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white/60 dark:bg-slate-800/50 px-4 py-3 sm:py-4 text-sm sm:text-base text-slate-800 dark:text-white shadow-sm backdrop-blur-sm outline-none transition-all duration-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+                      disabled={paymentProcessing}
+                      className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white/60 dark:bg-slate-800/50 px-4 py-3 sm:py-4 text-sm sm:text-base text-slate-800 dark:text-white shadow-sm backdrop-blur-sm outline-none transition-all duration-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 disabled:opacity-60"
                     >
                       {selectOptions.duration.map(opt => (
                         <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -293,7 +478,8 @@ function BookSession() {
                       name="mode"
                       value={form.mode}
                       onChange={handleChange}
-                      className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white/60 dark:bg-slate-800/50 px-4 py-3 sm:py-4 text-sm sm:text-base text-slate-800 dark:text-white shadow-sm backdrop-blur-sm outline-none transition-all duration-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+                      disabled={paymentProcessing}
+                      className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white/60 dark:bg-slate-800/50 px-4 py-3 sm:py-4 text-sm sm:text-base text-slate-800 dark:text-white shadow-sm backdrop-blur-sm outline-none transition-all duration-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 disabled:opacity-60"
                     >
                       {selectOptions.mode.map(opt => (
                         <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -314,7 +500,8 @@ function BookSession() {
                       onChange={handleChange}
                       rows="3"
                       placeholder="Tell me what you'd like to discuss..."
-                      className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white/60 dark:bg-slate-800/50 pl-9 sm:pl-11 pr-4 py-3 sm:py-4 text-sm sm:text-base text-slate-800 dark:text-white shadow-sm backdrop-blur-sm outline-none transition-all duration-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+                      disabled={paymentProcessing}
+                      className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white/60 dark:bg-slate-800/50 pl-9 sm:pl-11 pr-4 py-3 sm:py-4 text-sm sm:text-base text-slate-800 dark:text-white shadow-sm backdrop-blur-sm outline-none transition-all duration-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 disabled:opacity-60"
                     />
                   </div>
                 </div>
@@ -338,15 +525,15 @@ function BookSession() {
               <div className="mt-4 space-y-3">
                 <div className="flex justify-between items-center p-3 rounded-xl bg-white/50 dark:bg-white/5 backdrop-blur-sm">
                   <span className="text-sm text-slate-700 dark:text-slate-300">30 min Session</span>
-                  <span className="text-lg font-bold text-cyan-600 dark:text-cyan-400">₹99</span>
+                  <span className="text-lg font-bold text-cyan-600 dark:text-cyan-400">₹499</span>
                 </div>
                 <div className="flex justify-between items-center p-3 rounded-xl bg-white/50 dark:bg-white/5 backdrop-blur-sm">
                   <span className="text-sm text-slate-700 dark:text-slate-300">45 min Session</span>
-                  <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400">₹199</span>
+                  <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400">₹699</span>
                 </div>
                 <div className="flex justify-between items-center p-3 rounded-xl bg-white/50 dark:bg-white/5 backdrop-blur-sm border border-purple-500/30">
                   <span className="text-sm text-slate-700 dark:text-slate-300">60 min Session</span>
-                  <span className="text-lg font-bold text-purple-600 dark:text-purple-400">₹299</span>
+                  <span className="text-lg font-bold text-purple-600 dark:text-purple-400">₹999</span>
                 </div>
               </div>
             </div>
@@ -361,12 +548,7 @@ function BookSession() {
                 {paymentMethods.map(method => (
                   <div
                     key={method.id}
-                    onClick={() => setSelectedPayment(method.id)}
-                    className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all duration-200 ${
-                      selectedPayment === method.id
-                        ? "border-cyan-500 bg-cyan-500/10 dark:bg-cyan-500/20"
-                        : "border-slate-200 dark:border-white/10 hover:border-cyan-500/50"
-                    }`}
+                    className="flex items-center gap-3 p-3 rounded-xl border border-cyan-500 bg-cyan-500/10 dark:bg-cyan-500/20"
                   >
                     <div className={`h-10 w-10 rounded-full bg-gradient-to-r ${method.gradient} flex items-center justify-center text-white shrink-0`}>
                       <method.icon />
@@ -375,9 +557,7 @@ function BookSession() {
                       <p className="font-semibold text-sm sm:text-base text-slate-800 dark:text-white">{method.label}</p>
                       <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{method.sub}</p>
                     </div>
-                    {selectedPayment === method.id && (
-                      <FaCheckCircle className="text-cyan-500 shrink-0" />
-                    )}
+                    <FaCheckCircle className="text-cyan-500 shrink-0" />
                   </div>
                 ))}
               </div>
@@ -414,10 +594,25 @@ function BookSession() {
 
               <button
                 onClick={handleSubmit}
-                className="mt-6 w-full flex items-center justify-center gap-3 rounded-xl sm:rounded-2xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-700 py-4 sm:py-5 text-base sm:text-lg md:text-xl font-bold text-white shadow-xl transition-all duration-200 hover:scale-105 active:scale-95"
+                disabled={loading || paymentProcessing || !razorpayLoaded}
+                className="mt-6 w-full flex items-center justify-center gap-3 rounded-xl sm:rounded-2xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-700 py-4 sm:py-5 text-base sm:text-lg md:text-xl font-bold text-white shadow-xl transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                <FaLock />
-                Pay & Book Session
+                {loading || paymentProcessing ? (
+                  <>
+                    <FaSpinner className="animate-spin" />
+                    Processing...
+                  </>
+                ) : !razorpayLoaded ? (
+                  <>
+                    <FaSpinner className="animate-spin" />
+                    Loading Payment...
+                  </>
+                ) : (
+                  <>
+                    <FaLock />
+                    Pay & Book Session
+                  </>
+                )}
               </button>
 
               <div className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-500 dark:text-slate-400">

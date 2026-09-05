@@ -1,17 +1,17 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { HiOutlineMenuAlt3, HiX } from "react-icons/hi";
 import { motion } from "framer-motion";
 import { useTheme } from "../../context/ThemeContext";
 import { FiMoon, FiSun } from "react-icons/fi";
 import Logo from "../../assets/logo.png";
-import { useNavigate } from "react-router-dom";
 
 function Navbar() {
     const [menuOpen, setMenuOpen] = useState(false);
     const { theme, toggleTheme } = useTheme();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const navigate = useNavigate();
+    const location = useLocation();
 
     const navItems = [
         "Home",
@@ -22,56 +22,74 @@ function Navbar() {
         "Contact",
     ];
 
+    const getLinkPath = (item) => {
+        return item === "Home" ? "/" : `/${item.toLowerCase()}`;
+    };
+
+    const isActive = (item) => {
+        const path = getLinkPath(item);
+        if (item === "Home") {
+            return location.pathname === "/";
+        }
+        return location.pathname === path;
+    };
+
+    const handleNavigation = (path) => {
+        navigate(path);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        setMenuOpen(false);
+    };
+
     return (
         <header className="fixed top-0 left-0 z-50 w-full">
             <div className="mx-auto mt-5 flex w-[95%] max-w-7xl items-center justify-between rounded-2xl border border-white/10 bg-white/10 px-6 py-4 shadow-2xl backdrop-blur-xl dark:bg-white/5">
 
                 {/* Logo */}
-                <Link to="/" className="flex items-center gap-3 group">
-
+                <Link 
+                    to="/" 
+                    onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                    className="flex items-center gap-3 group"
+                >
                     <div className="relative">
-
                         <img
                             src={Logo}
                             alt="Son Pratap"
                             className="h-14 w-14 rounded-2xl object-cover border-2 border-cyan-400 shadow-[0_0_25px_rgba(6,182,212,0.6)] transition-all duration-500 group-hover:scale-110 group-hover:rotate-6"
                         />
-
                         <span className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white bg-green-500 dark:border-[#08111f]"></span>
-
                     </div>
-
                     <div>
-
                         <h2 className="bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 bg-clip-text text-2xl font-black tracking-wide text-transparent">
                             Son Pratap
                         </h2>
-
                         <p className="text-xs font-medium tracking-[3px] uppercase text-slate-500 dark:text-slate-400">
                             Full Stack Developer
                         </p>
-
                     </div>
-
                 </Link>
 
                 {/* Desktop Menu */}
                 <nav className="hidden items-center gap-8 lg:flex">
                     {navItems.map((item) => (
-                        <Link
+                        <button
                             key={item}
-                            to={item === "Home" ? "/" : `/${item.toLowerCase()}`}
-                            className="relative text-sm font-medium text-gray-700 transition duration-300 hover:text-cyan-500 dark:text-gray-200"
+                            onClick={() => handleNavigation(getLinkPath(item))}
+                            className={`relative text-sm font-medium transition duration-300 ${
+                                isActive(item)
+                                    ? "text-cyan-500"
+                                    : "text-gray-700 hover:text-cyan-500 dark:text-gray-200"
+                            }`}
                         >
                             {item}
-                        </Link>
+                            {isActive(item) && (
+                                <span className="absolute -bottom-1 left-0 h-0.5 w-full bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full shadow-[0_0_10px_rgba(6,182,212,0.6)]"></span>
+                            )}
+                        </button>
                     ))}
                 </nav>
 
                 {/* Right Side */}
                 <div className="hidden items-center gap-4 lg:flex">
-
-
                     <button
                         onClick={toggleTheme}
                         className="flex h-11 w-11 items-center justify-center rounded-full border border-cyan-500/30 bg-white/10 text-xl text-cyan-500 backdrop-blur-lg transition hover:scale-110 hover:bg-cyan-500 hover:text-white"
@@ -80,13 +98,14 @@ function Navbar() {
                     </button>
 
                     <button
-                        onClick={() => navigate("/contact")}
+                        onClick={() => {
+                            navigate("/contact");
+                            window.scrollTo({ top: 0, behavior: "smooth" });
+                        }}
                         className="rounded-full bg-gradient-to-r from-cyan-500 to-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-cyan-500/40"
                     >
                         Hire Me
                     </button>
-
-
                 </div>
 
                 {/* Mobile Icon */}
@@ -97,7 +116,6 @@ function Navbar() {
                     {menuOpen ? <HiX /> : <HiOutlineMenuAlt3 />}
                 </button>
             </div>
-
 
             {/* Premium Mobile Menu */}
             {menuOpen && (
@@ -134,11 +152,9 @@ function Navbar() {
                                 alt="Logo"
                                 className="h-14 w-14 rounded-full border-2 border-cyan-400 object-cover shadow-[0_0_20px_rgba(6,182,212,.6)]"
                             />
-
                             <h2 className="mt-2 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 bg-clip-text text-lg font-bold text-transparent">
                                 Son Pratap
                             </h2>
-
                             <p className="mt-1 text-[10px] uppercase tracking-[2px] text-slate-500 dark:text-slate-400">
                                 Full Stack Developer
                             </p>
@@ -147,14 +163,17 @@ function Navbar() {
                         {/* Navigation */}
                         <div className="flex flex-col items-center gap-1">
                             {navItems.map((item) => (
-                                <Link
+                                <button
                                     key={item}
-                                    to={item === "Home" ? "/" : `/${item.toLowerCase()}`}
-                                    onClick={() => setMenuOpen(false)}
-                                    className="w-full rounded-xl py-1.5 text-center text-base font-semibold text-slate-800 transition-all duration-300 hover:bg-cyan-500/10 hover:text-cyan-600 dark:text-white dark:hover:bg-cyan-500/20 dark:hover:text-cyan-400"
+                                    onClick={() => handleNavigation(getLinkPath(item))}
+                                    className={`w-full rounded-xl py-1.5 text-center text-base font-semibold transition-all duration-300 ${
+                                        isActive(item)
+                                            ? "text-cyan-600 bg-cyan-500/10 dark:text-cyan-400 dark:bg-cyan-500/20"
+                                            : "text-slate-800 hover:bg-cyan-500/10 hover:text-cyan-600 dark:text-white dark:hover:bg-cyan-500/20 dark:hover:text-cyan-400"
+                                    }`}
                                 >
                                     {item}
-                                </Link>
+                                </button>
                             ))}
                         </div>
 
@@ -175,6 +194,7 @@ function Navbar() {
                                 onClick={() => {
                                     setMenuOpen(false);
                                     navigate("/contact");
+                                    window.scrollTo({ top: 0, behavior: "smooth" });
                                 }}
                                 className="rounded-full bg-gradient-to-r from-cyan-500 to-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-cyan-500/40"
                             >
