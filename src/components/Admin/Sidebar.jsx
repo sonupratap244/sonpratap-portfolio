@@ -1,3 +1,4 @@
+// Sidebar.js - Updated with Bookings menu
 import { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,6 +20,7 @@ import {
   FiHome,
   FiMessageSquare,
   FiStar,
+  FiCalendar,
 } from "react-icons/fi";
 
 import Logo from "../../assets/logo.png";
@@ -30,7 +32,6 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
   const [collapse, setCollapse] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Close mobile menu on resize to desktop
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 1024) {
@@ -46,6 +47,11 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
       title: "Dashboard",
       icon: <FiGrid size={20} />,
       path: "/admin/dashboard",
+    },
+    {
+      title: "Bookings",
+      icon: <FiCalendar size={20} />,
+      path: "/admin/bookings",
     },
     {
       title: "Projects",
@@ -79,7 +85,6 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
     navigate("/admin/login");
   };
 
-  // Sidebar background based on theme
   const sidebarBg = theme === "dark" 
     ? "bg-[#08111f] border-white/10" 
     : "bg-white border-slate-200";
@@ -91,7 +96,6 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
 
   return (
     <>
-      {/* Mobile Menu Button - Floating */}
       <motion.button
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
@@ -104,7 +108,6 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
         <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-green-400 border-2 border-white animate-pulse"></span>
       </motion.button>
 
-      {/* Desktop Sidebar */}
       <motion.aside
         animate={{
           width: collapse ? 80 : 280,
@@ -117,7 +120,6 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
         }}
         className={`fixed left-0 top-0 z-50 hidden h-screen flex-col border-r shadow-2xl backdrop-blur-xl lg:flex ${sidebarBg}`}
       >
-        {/* Header */}
         <div className={`flex items-center justify-between border-b p-4 ${theme === "dark" ? "border-white/10" : "border-slate-200"}`}>
           <div className="flex items-center gap-3 overflow-hidden">
             <motion.div
@@ -160,7 +162,6 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
           </motion.button>
         </div>
 
-        {/* Navigation */}
         <div className="flex-1 overflow-y-auto px-3 py-6 scrollbar-thin scrollbar-thumb-cyan-500/20">
           <motion.p
             animate={{ opacity: collapse ? 0 : 1 }}
@@ -190,7 +191,6 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
                   <span className="flex-shrink-0">{item.icon}</span>
                   {!collapse && <span>{item.title}</span>}
                   
-                  {/* Active Indicator */}
                   <span className="absolute -right-1 top-1/2 -translate-y-1/2 h-8 w-1 rounded-full bg-cyan-400 opacity-0 group-[.active]:opacity-100 transition-opacity duration-300"></span>
                 </NavLink>
               </motion.div>
@@ -198,7 +198,6 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
           </div>
         </div>
 
-        {/* Footer */}
         <div className={`border-t p-4 ${theme === "dark" ? "border-white/10" : "border-slate-200"}`}>
           <motion.button
             whileHover={{ scale: 1.02 }}
@@ -214,7 +213,6 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
         </div>
       </motion.aside>
 
-      {/* Mobile Sidebar - Premium */}
       <AnimatePresence mode="wait">
         {mobileOpen && (
           <>

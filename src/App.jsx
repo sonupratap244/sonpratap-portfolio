@@ -8,6 +8,8 @@ import Projects from "./pages/Projects";
 import Experience from "./pages/Experience";
 import Contact from "./pages/Contact";
 import BookSession from "./pages/BookSession";
+import AdminBookings from "./pages/Admin/AdminBookings";
+import AdminBookingDetails from "./pages/Admin/AdminBookingDetails";
 
 import AdminLogin from "./pages/Admin/AdminLogin";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
@@ -15,7 +17,6 @@ import AdminProjects from "./pages/Admin/AdminProjects";
 import AdminProfile from "./pages/Admin/AdminProfile";
 import AdminExperience from "./pages/Admin/AdminExperience/AdminExperience";
 import AdminSettings from "./pages/Admin/AdminSettings/AdminSettings";
-
 
 function App() {
   return (
@@ -27,34 +28,18 @@ function App() {
         <Route path="projects" element={<Projects />} />
         <Route path="experience" element={<Experience />} />
         <Route path="contact" element={<Contact />} />
-
-
-
       </Route>
+      
       <Route path="/book-session" element={<BookSession />} />
-      <Route
-        path="/admin/login"
-        element={<AdminLogin />}
-      />
-
-
-      <Route
-        path="/admin/dashboard"
-        element={<AdminDashboard />}
-      />
+      
+      <Route path="/admin/login" element={<AdminLogin />} />
+      <Route path="/admin/dashboard" element={<AdminDashboard />} />
       <Route path="/admin/projects" element={<AdminProjects />} />
-      <Route
-        path="/admin/profile"
-        element={<AdminProfile />}
-      />
-      <Route
-        path="/admin/experience"
-        element={<AdminExperience />}
-      />
-      <Route
-        path="/admin/settings"
-        element={<AdminSettings />}
-      />
+      <Route path="/admin/profile" element={<AdminProfile />} />
+      <Route path="/admin/experience" element={<AdminExperience />} />
+      <Route path="/admin/settings" element={<AdminSettings />} />
+      <Route path="/admin/bookings" element={<AdminBookings />} />
+      <Route path="/admin/bookings/:id" element={<AdminBookingDetails />} />
     </Routes>
   );
 }
